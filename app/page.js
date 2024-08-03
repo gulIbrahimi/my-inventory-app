@@ -1,95 +1,117 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import { Button, Container, IconButton, List, ListItem, ListItemText, TextField, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { addDoc, collection, db, deleteDoc, doc, getDocs, updateDoc } from '../firebaseConfig';
 
 export default function Home() {
+  const [itemName, setItemName] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [items, setItems] = useState([]);
+  const [filteredItems, setFilteredItems] = useState([]);
+  const [editMode, setEditMode] = useState(false);
+  const [currentItem, setCurrentItem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const handleAddItem = async () => {
+    if (itemName && quantity) {
+      if (editMode && currentItem) {
+        await updateDoc(doc(db, 'items', currentItem.id), { itemName, quantity });
+        setEditMode(false);
+        setCurrentItem(null);
+      } else {
+        await addDoc(collection(db, 'items'), { itemName, quantity });
+      }
+      fetchItems();
+      setItemName('');
+      setQuantity('');
+    }
+  };
+
+  const fetchItems = async () => {
+    const itemsCollection = collection(db, 'items');
+    const querySnapshot = await getDocs(itemsCollection);
+    const itemsList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setItems(itemsList);
+    setFilteredItems(itemsList);
+  };
+
+  const handleEdit = (item) => {
+    setEditMode(true);
+    setCurrentItem(item);
+    setItemName(item.itemName);
+    setQuantity(item.quantity);
+  };
+
+  const handleDelete = async (id) => {
+    await deleteDoc(doc(db, 'items', id));
+    fetchItems();
+  };
+
+  const handleSearch = (event) => {
+    setSearchTerm(event.target.value);
+    const filtered = items.filter(item =>
+      item.itemName.toLowerCase().includes(event.target.value.toLowerCase())
+    );
+    setFilteredItems(filtered);
+  };
+
+  useEffect(() => {
+    fetchItems();
+  }, []);
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <Container>
+      <Typography variant="h4" gutterBottom>
+        Inventory Management System
+      </Typography>
+      <TextField
+        label="Item Name"
+        variant="outlined"
+        fullWidth
+        margin="normal"
+        value={itemName}
+        onChange={(e) => setItemName(e.target.value)}
+      />
+      <TextField
+        label="Quantity"
+        variant="outlined"
+        fullWidth
+        margin="normal"
+        value={quantity}
+        onChange={(e) => setQuantity(e.target.value)}
+      />
+      <Button variant="contained" color="primary" fullWidth onClick={handleAddItem}>
+        {editMode ? 'Update Item' : 'Add Item'}
+      </Button>
+      <TextField
+        label="Search"
+        variant="outlined"
+        fullWidth
+        margin="normal"
+        value={searchTerm}
+        onChange={handleSearch}
+      />
+      <List>
+        {filteredItems.map(item => (
+          <ListItem key={item.id}
+            secondaryAction={
+              <>
+                <IconButton edge="end" aria-label="edit" onClick={() => handleEdit(item)}>
+                  <EditIcon />
+                </IconButton>
+                <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(item.id)}>
+                  <DeleteIcon />
+                </IconButton>
+              </>
+            }
           >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+            <ListItemText primary={item.itemName} secondary={`Quantity: ${item.quantity}`} />
+          </ListItem>
+        ))}
+      </List>
+    </Container>
   );
 }
