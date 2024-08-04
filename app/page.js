@@ -1,8 +1,9 @@
+// app/page.js
 "use client";
 
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import { Button, Container, IconButton, List, ListItem, ListItemText, TextField, Typography } from '@mui/material';
+import { Button, Card, CardContent, Container, IconButton, List, ListItem, ListItemText, TextField, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { addDoc, collection, db, deleteDoc, doc, getDocs, updateDoc } from '../firebaseConfig';
 
@@ -64,28 +65,33 @@ export default function Home() {
 
   return (
     <Container>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h1" gutterBottom>
         Inventory Management System
       </Typography>
-      <TextField
-        label="Item Name"
-        variant="outlined"
-        fullWidth
-        margin="normal"
-        value={itemName}
-        onChange={(e) => setItemName(e.target.value)}
-      />
-      <TextField
-        label="Quantity"
-        variant="outlined"
-        fullWidth
-        margin="normal"
-        value={quantity}
-        onChange={(e) => setQuantity(e.target.value)}
-      />
-      <Button variant="contained" color="primary" fullWidth onClick={handleAddItem}>
-        {editMode ? 'Update Item' : 'Add Item'}
-      </Button>
+      <Card>
+        <CardContent>
+          <Typography variant="h2">Add or Edit Item</Typography>
+          <TextField
+            label="Item Name"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={itemName}
+            onChange={(e) => setItemName(e.target.value)}
+          />
+          <TextField
+            label="Quantity"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+          />
+          <Button variant="contained" color="primary" fullWidth onClick={handleAddItem}>
+            {editMode ? 'Update Item' : 'Add Item'}
+          </Button>
+        </CardContent>
+      </Card>
       <TextField
         label="Search"
         variant="outlined"
@@ -96,20 +102,24 @@ export default function Home() {
       />
       <List>
         {filteredItems.map(item => (
-          <ListItem key={item.id}
-            secondaryAction={
-              <>
-                <IconButton edge="end" aria-label="edit" onClick={() => handleEdit(item)}>
-                  <EditIcon />
-                </IconButton>
-                <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(item.id)}>
-                  <DeleteIcon />
-                </IconButton>
-              </>
-            }
-          >
-            <ListItemText primary={item.itemName} secondary={`Quantity: ${item.quantity}`} />
-          </ListItem>
+          <Card key={item.id} variant="outlined" style={{ marginBottom: '16px' }}>
+            <CardContent>
+              <ListItem
+                secondaryAction={
+                  <>
+                    <IconButton edge="end" aria-label="edit" onClick={() => handleEdit(item)}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(item.id)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </>
+                }
+              >
+                <ListItemText primary={item.itemName} secondary={`Quantity: ${item.quantity}`} />
+              </ListItem>
+            </CardContent>
+          </Card>
         ))}
       </List>
     </Container>
